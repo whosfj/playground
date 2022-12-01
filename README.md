@@ -1,2 +1,2 @@
 # playground
-Repository of experimental Terraform modules.
+Repository for building experimental Terraform modules.
