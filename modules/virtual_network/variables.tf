@@ -10,16 +10,15 @@ variable "deploy_resource_group" {
   description = "(Optional) Specifies whether to deploy a Resource Group. Defaults to false."
 }
 
-variable "deploy_network_security_group" {
-  type        = bool
-  default     = false
-  description = "(Optional) Specifies whether to deploy a Network Security Group. Defaults to false."
-}
-
 variable "resource_group_name" {
   type        = string
   default     = null
   description = "(Required) The name of the resource group in which to create the virtual network."
+}
+
+variable "address_space" {
+  type        = list(string)
+  description = "(Required) The address space that is used the virtual network. You can supply more than one address space."
 }
 
 variable "location" {
@@ -28,23 +27,28 @@ variable "location" {
   description = "(Required) The location/region where the virtual network is created. Changing this forces a new resource to be created."
 }
 
-variable "address_space" {
-  type        = list(string)
-  description = "(Required) The address space that is used the virtual network. You can supply more than one address space."
-}
-
 variable "bgp_community" {
   type        = string
   default     = null
   description = "(Optional) The BGP community attribute in format <as-number>:<community-value>."
 }
 
-variable "ddos_protection_plans" {
-  type = map(object({
-    ddos_protection_plan_enable = string
-  }))
-  default     = {}
-  description = "(Optional) Can be specified to define the ID of DDoS Protection Plan and Enable/disable DDoS Protection Plan on Virtual Network."
+variable "deploy_ddos_protection_plan" {
+  type        = bool
+  default     = false
+  description = "(Optional) Specifies whether to deploy a DDoS Protection Plan. Defaults to false."
+}
+
+variable "ddos_protection_plan_id" {
+  type        = string
+  default     = null
+  description = "(Optional) The ID of the DDoS protection plan to associate with the virtual network."
+}
+
+variable "ddos_protection_plan_enable" {
+  type        = bool
+  default     = null
+  description = "(Optional) Specifies whether the DDoS protection plan is enabled. Defaults to false."
 }
 
 variable "dns_servers" {
@@ -67,15 +71,6 @@ variable "flow_timeout_in_minutes" {
     error_message = "The value of flow_timeout_in_minutes must be between 4 and 30."
   }
   description = "(Optional) The flow timeout in minutes for the Virtual Network, which is used to enable connection tracking for intra-VM flows. Possible values are between 4 and 30 minutes."
-}
-
-variable "subnets" {
-  type = map(object({
-    address_prefix = string
-    security_group = string
-  }))
-  default     = {}
-  description = "(Optional) Can be specified multiple times to define multiple subnets. Each subnet block supports fields documented below."
 }
 
 variable "tags" {

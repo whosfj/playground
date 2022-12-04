@@ -4,15 +4,8 @@ variable "name" {
   description = "(Required) Specifies the name of the Public IP. Changing this forces a new Public IP to be created."
 }
 
-variable "deploy_resource_group" {
-  type        = bool
-  default     = false
-  description = "(Optional) Specifies whether to deploy a Resource Group. Defaults to false."
-}
-
 variable "resource_group_name" {
   type        = string
-  default     = null
   description = "(Required) The name of the Resource Group where this Public IP should exist. Changing this forces a new Public IP to be created."
 }
 

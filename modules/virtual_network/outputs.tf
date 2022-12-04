@@ -28,10 +28,3 @@ output "guid" {
   value       = azurerm_virtual_network.vnet.guid
   description = "The GUID of the virtual network."
 }
-
-output "subnet_ids" {
-  value = tomap({
-    for id, subnet in azurerm_virtual_network.vnet.subnet : id => subnet.id
-  })
-  description = "A list of subnet IDs."
-}
