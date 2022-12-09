@@ -134,25 +134,25 @@ variable "fips_enabled" {
 
 variable "global_request_buffering_enabled" {
   type        = bool
-  default     = null
-  description = "(Optional) Whether Application Gateway's Request buffer is enabled."
+  default     = true
+  description = "(Optional) Whether Application Gateway's Request buffer is enabled. By default, both Request and Response buffers are enabled on your Application Gateway."
 }
 
 variable "global_response_buffering_enabled" {
   type        = bool
-  default     = null
-  description = "(Optional) Whether Application Gateway's Response buffer is enabled."
+  default     = true
+  description = "(Optional) Whether Application Gateway's Response buffer is enabled. By default, both Request and Response buffers are enabled on your Application Gateway."
 }
 
 variable "identity_type" {
   type        = string
-  default     = null
+  default     = "UserAssigned"
   description = "(Optional) Specifies the type of Managed Service Identity that should be configured on this Application Gateway. Only possible value is UserAssigned."
 }
 
 variable "identity_ids" {
   type        = list(string)
-  default     = null
+  default     = []
   description = "(Optional) Specifies a list of User Assigned Managed Identity IDs to be assigned to this Application Gateway."
 }
 
@@ -317,65 +317,27 @@ variable "url_path_map" {
   description = "(Optional) One or more url_path_map blocks as defined above."
 }
 
-variable "waf_configuration_enabled" {
-  type        = bool
-  default     = null
-  description = "(Required) Is the Web Application Firewall enabled?"
-}
-
-variable "waf_configuration_firewall_mode" {
-  type        = string
-  default     = null
-  description = "(Optional) The Web Application Firewall Mode. Possible values are Detection and Prevention."
-}
-
-variable "waf_configuration_rule_set_type" {
-  type        = string
-  default     = null
-  description = "(Optional) The Type of the Rule Set used for this Web Application Firewall. Currently, only OWASP is supported."
-}
-
-variable "waf_configuration_rule_set_version" {
-  type        = string
-  default     = null
-  description = "(Optional) The Version of the Rule Set used for this Web Application Firewall. Possible values are 2.2.9, 3.0, 3.1, and 3.2."
-}
-
-variable "waf_configuration_disabled_rule_group" {
+variable "waf_configuration" {
   type = map(object({
-    rule_group_name = string
-    rules           = optional(list(string))
+    enabled          = bool
+    firewall_mode    = string
+    rule_set_type    = string
+    rule_set_version = string
+    disabled_rule_group = optional(map(object({
+      rule_group_name = string
+      rules           = optional(list(string))
+    })))
+    file_upload_limit_mb     = optional(number)
+    request_body_check       = optional(bool)
+    max_request_body_size_kb = optional(number)
+    exclusion = optional(map(object({
+      match_variable          = string
+      selector_match_operator = optional(string)
+      selector                = optional(string)
+    })))
   }))
   default     = {}
-  description = "(Optional) one or more disabled_rule_group blocks as defined above."
-}
-
-variable "waf_configuration_file_upload_limit_mb" {
-  type        = number
-  default     = 100
-  description = "(Optional) The File Upload Limit in MB. Accepted values are in the range 1MB to 750MB for the WAF_v2 SKU, and 1MB to 500MB for all other SKUs. Defaults to 100MB."
-}
-
-variable "waf_configuration_request_body_check" {
-  type        = bool
-  default     = true
-  description = "(Optional) Is Request Body Inspection enabled? Defaults to true."
-}
-
-variable "waf_configuration_max_request_body_size_kb" {
-  type        = number
-  default     = 128
-  description = "(Optional) The Maximum Request Body Size in KB. Accepted values are in the range 1KB to 128KB. Defaults to 128KB."
-}
-
-variable "waf_configuration_exclusion" {
-  type = map(object({
-    match_variable          = string
-    selector_match_operator = optional(string)
-    selector                = optional(string)
-  }))
-  default     = {}
-  description = "(Optional) one or more exclusion blocks as defined above."
+  description = "(Optional) One Web Application Firewall configuration block as defined above."
 }
 
 variable "custom_error_configuration" {
@@ -405,16 +367,13 @@ variable "redirect_configuration" {
   description = "(Optional) One or more redirect_configuration blocks as defined above."
 }
 
-variable "autoscale_configuration_min_capacity" {
-  type        = number
-  default     = null
-  description = "(Optional) Minimum capacity for autoscaling. Accepted values are in the range 0 to 100."
-}
-
-variable "autoscale_configuration_max_capacity" {
-  type        = number
-  default     = null
-  description = "(Optional) Maximum capacity for autoscaling. Accepted values are in the range 2 to 125."
+variable "autoscale_configuration" {
+  type = map(object({
+    min_capacity = number
+    max_capacity = number
+  }))
+  default     = {}
+  description = "(Optional) Minimum and maximum capacity for autoscaling. Accepted values are in the range 0 to 100 for min_capacity and 2 to 125 for max_capacity."
 }
 
 variable "rewrite_rule_set" {

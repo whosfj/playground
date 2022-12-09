@@ -137,7 +137,7 @@ resource "azurerm_application_gateway" "agw" {
   sku {
     name     = var.sku_name
     tier     = var.sku_tier
-    capacity = var.autoscale_configuration_min_capacity == null && var.autoscale_configuration_max_capacity == null ? null : var.sku_capacity
+    capacity = var.sku_capacity
   }
 
   // Optional attributes
@@ -197,7 +197,7 @@ resource "azurerm_application_gateway" "agw" {
       verify_client_cert_issuer_dn     = ssl_profile.value.verify_client_cert_issuer_dn == true ? ssl_profile.value.verify_client_cert_issuer_dn : false // Default value
 
       dynamic "ssl_policy" {
-        for_each = ssl_profile.value.ssl_policy
+        for_each = ssl_profile.value.ssl_policy == null ? {} : ssl_profile.value.ssl_policy
 
         content {
           disabled_protocols   = ssl_policy.value.policy_type == null && ssl_policy.value.policy_name == null && ssl_policy.value.disabled_protocols == "TLSv1_0" || ssl_policy.value.disabled_protocols == "TLSv1_1" || ssl_policy.value.disabled_protocols == "TLSv1_2" ? ssl_policy.value.disabled_protocols : null
@@ -259,7 +259,7 @@ resource "azurerm_application_gateway" "agw" {
       pick_host_name_from_backend_http_settings = probe.value.pick_host_name_from_backend_http_settings
 
       dynamic "match" {
-        for_each = probe.value.match
+        for_each = probe.value.match == null ? {} : probe.value.match
 
         content {
           body        = match.value.body
@@ -316,33 +316,37 @@ resource "azurerm_application_gateway" "agw" {
     }
   }
 
-  waf_configuration {
-    enabled          = var.waf_configuration_enabled
-    firewall_mode    = var.waf_configuration_firewall_mode
-    rule_set_type    = var.waf_configuration_rule_set_type
-    rule_set_version = var.waf_configuration_rule_set_version
+  dynamic "waf_configuration" {
+    for_each = var.waf_configuration == null ? {} : var.waf_configuration
 
-    // Optional attributes
-    dynamic "disabled_rule_group" {
-      for_each = var.waf_configuration_disabled_rule_group
+    content {
+      enabled          = waf_configuration.value.enabled
+      firewall_mode    = waf_configuration.value.firewall_mode
+      rule_set_type    = waf_configuration.value.rule_set_type
+      rule_set_version = waf_configuration.value.rule_set_version
 
-      content {
-        rule_group_name = waf_configuration_disabled_rule_group.value.rule_group_name
-        rules           = waf_configuration_disabled_rule_group.value.rules
+      // Optional attributes
+      dynamic "disabled_rule_group" {
+        for_each = waf_configuration.value.disabled_rule_group == null ? {} : waf_configuration.value.disabled_rule_group
+
+        content {
+          rule_group_name = disabled_rule_group.value.rule_group_name
+          rules           = disabled_rule_group.value.rules
+        }
       }
-    }
 
-    file_upload_limit_mb     = var.waf_configuration_file_upload_limit_mb
-    request_body_check       = var.waf_configuration_request_body_check
-    max_request_body_size_kb = var.waf_configuration_max_request_body_size_kb
+      file_upload_limit_mb     = waf_configuration.value.file_upload_limit_mb
+      request_body_check       = waf_configuration.value.request_body_check
+      max_request_body_size_kb = waf_configuration.value.max_request_body_size_kb
 
-    dynamic "exclusion" {
-      for_each = var.waf_configuration_exclusion
+      dynamic "exclusion" {
+        for_each = waf_configuration.value.exclusion == null ? {} : waf_configuration.value.exclusion
 
-      content {
-        match_variable          = waf_configuration_exclusion.value.match_variable == "RequestArgKeys" || waf_configuration_exclusion.value.match_variable == "RequestArgNames" || waf_configuration_exclusion.value.match_variable == "RequestArgValues" || waf_configuration_exclusion.value.match_variable == "RequestCookieKeys" || waf_configuration_exclusion.value.match_variable == "RequestCookieNames" || waf_configuration_exclusion.value.match_variable == "RequestCookieValues" || waf_configuration_exclusion.value.match_variable == "RequestHeaderKeys" || waf_configuration_exclusion.value.match_variable == "RequestHeaderNames" || waf_configuration_exclusion.value.match_variable == "RequestHeaderValues" ? waf_configuration_exclusion.value.match_variable : null
-        selector_match_operator = waf_configuration_exclusion.value.selector_match_operator == "Contains" || waf_configuration_exclusion.value.selector_match_operator == "EndsWith" || waf_configuration_exclusion.value.selector_match_operator == "Equals" || waf_configuration_exclusion.value.selector_match_operator == "EqualsAny" || waf_configuration_exclusion.value.selector_match_operator == "StartsWith" ? waf_configuration_exclusion.value.selector_match_operator : null
-        selector                = waf_configuration_exclusion.value.selector
+        content {
+          match_variable          = exclusion.value.match_variable == "RequestArgKeys" || exclusion.value.match_variable == "RequestArgNames" || exclusion.value.match_variable == "RequestArgValues" || exclusion.value.match_variable == "RequestCookieKeys" || exclusion.value.match_variable == "RequestCookieNames" || exclusion.value.match_variable == "RequestCookieValues" || exclusion.value.match_variable == "RequestHeaderKeys" || exclusion.value.match_variable == "RequestHeaderNames" || exclusion.value.match_variable == "RequestHeaderValues" ? exclusion.value.match_variable : null
+          selector_match_operator = exclusion.value.selector_match_operator == "Contains" || exclusion.value.selector_match_operator == "EndsWith" || exclusion.value.selector_match_operator == "Equals" || exclusion.value.selector_match_operator == "EqualsAny" || exclusion.value.selector_match_operator == "StartsWith" ? exclusion.value.selector_match_operator : null
+          selector                = exclusion.value.selector
+        }
       }
     }
   }
@@ -373,9 +377,13 @@ resource "azurerm_application_gateway" "agw" {
     }
   }
 
-  autoscale_configuration {
-    min_capacity = var.autoscale_configuration_min_capacity
-    max_capacity = var.autoscale_configuration_max_capacity
+  dynamic "autoscale_configuration" {
+    for_each = var.autoscale_configuration
+
+    content {
+      min_capacity = autoscale_configuration.value.min_capacity
+      max_capacity = autoscale_configuration.value.max_capacity
+    }
   }
 
   dynamic "rewrite_rule_set" {
@@ -393,7 +401,7 @@ resource "azurerm_application_gateway" "agw" {
 
           // Optional attributes
           dynamic "condition" {
-            for_each = rewrite_rule.value.condition
+            for_each = rewrite_rule.value.condition == null ? {} : rewrite_rule.value.condition
 
             content {
               variable = condition.value.variable
@@ -406,7 +414,7 @@ resource "azurerm_application_gateway" "agw" {
           }
 
           dynamic "request_header_configuration" {
-            for_each = rewrite_rule.value.request_header_configuration
+            for_each = rewrite_rule.value.request_header_configuration == null ? {} : rewrite_rule.value.request_header_configuration
 
             content {
               header_name  = request_header_configuration.key
@@ -415,7 +423,7 @@ resource "azurerm_application_gateway" "agw" {
           }
 
           dynamic "response_header_configuration" {
-            for_each = rewrite_rule.value.response_header_configuration
+            for_each = rewrite_rule.value.response_header_configuration == null ? {} : rewrite_rule.value.response_header_configuration
 
             content {
               header_name  = response_header_configuration.key
